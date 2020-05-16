@@ -1,0 +1,88 @@
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11/dist/vue.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@blaze/css@9.2.0/dist/blaze/blaze.css">
+  </head>
+  <body class="o-container o-container--medium">
+    <div id="app">
+      <header class="o-page-header">
+        <h1>Image minifier</h1>
+      </header>
+      <div class="o-grid" v-show="!uploadedImage">
+        <div class="o-grid__cell">
+          <div class="c-file-upload c-file-upload--drop">
+            Drop to upload your image
+            <input type="file" v-on:change="onFileChange"/>
+          </div>
+          <br/>
+          <div class="c-file-upload">
+            <button class="c-button c-button--info">Select image</button>
+            <input type="file" v-on:change="onFileChange" />
+          </div>
+        </div>
+      </div>
+      <br/>
+      <div class="o-grid">
+        <img v-show="uploadedImage" class="preview" :src="uploadedImage" alt="uploded" />
+      </div>
+      <br/>
+      <div v-show="uploadedImage">
+        <div class="o-form-element">
+          <label class="c-label" for="size">size (px)</label>
+          <input class="c-field" id="size" type="number" v-model="size" />
+        </div>
+      </div>
+      <div class="o-grid" v-show="uploadedImage">
+        <div class="o-gird__cell">
+          <button type="button" class="c-button c-button--info u-large" v-on:click="minify">minify!</button>
+        </div>
+      </div>
+      <br/>
+      <div>
+        <a id="download" v-show="downloadable" class="c-button c-button--success">Download</a>
+      </div>
+    </div>
+  </body>
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        message: 'hello',
+        uploadedImage: '',
+        downloadable: false,
+        size: 100
+      },
+      methods: {
+        onFileChange: function(e) {
+          const files = e.target.files || e.dataTransfer.files;
+          this.preview(files[0])
+        },
+        preview: function(file) {
+          const reader = new FileReader();
+          reader.onload = e => {
+            this.uploadedImage = e.target.result;
+          };
+          reader.readAsDataURL(file); 
+        },
+        minify: function() {
+          fetch('/convert', {
+            method: 'POST',
+            body: JSON.stringify({ image: this.uploadedImage, size: 200 })
+          }).then(response => response.blob())
+          .then(blob => {
+            let anchor = document.getElementById('download');
+            anchor.href = URL.createObjectURL(blob);
+            anchor.download = 'image.png'
+            this.downloadable = true
+          })
+        }
+      }
+    })
+  </script>
+  <style type="text/css">
+    img.preview {
+      max-width: 100%;
+      margin: auto;
+    }
+  </style>
+</html>
